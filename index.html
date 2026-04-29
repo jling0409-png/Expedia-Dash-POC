@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expedia Procurement Analytics Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: #f4f6f9; padding: 20px; }
+
+  .dash { max-width: 960px; margin: 0 auto; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 0 16px; border-bottom: 2px solid #003580; margin-bottom: 16px; }
+  .topbar-title { font-size: 20px; font-weight: 700; color: #003580; }
+  .topbar-sub { font-size: 12px; color: #666; margin-top: 3px; }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  select { font-size: 12px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; background: white; cursor: pointer; }
+  .btn-ai { font-size: 12px; padding: 5px 12px; background: #003580; color: #FFC72C; border: none; border-radius: 4px; cursor: pointer; font-weight: 700; }
+  .btn-ai:hover { background: #002a66; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: white; border-radius: 6px; padding: 14px 16px; border: 1px solid #e0e6ef; }
+  .kpi-label { font-size: 11px; color: #666; margin-bottom: 4px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: #003580; }
+  .kpi-delta { font-size: 11px; margin-top: 3px; }
+  .up { color: #22863a; }
+  .down { color: #cb2431; }
+  .warn { color: #e36209; }
+
+  .panels { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 12px; margin-bottom: 12px; }
+  .card { background: white; border: 1px solid #e0e6ef; border-radius: 8px; padding: 16px; }
+  .card-title { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  .tab-row { display: flex; gap: 4px; margin-bottom: 14px; }
+  .tab { font-size: 12px; padding: 5px 12px; border-radius: 4px; border: 1px solid #d1d9e6; background: transparent; cursor: pointer; color: #666; }
+  .tab.active { background: #003580; color: #FFC72C; border-color: #003580; font-weight: 700; }
+  .tab:hover:not(.active) { background: #f4f6f9; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+  .bar-label { width: 140px; color: #555; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 10px; background: #eef3f9; border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; }
+  .bar-val { width: 45px; text-align: right; color: #003580; font-weight: 700; flex-shrink: 0; }
+
+  .vendor-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eef3f9; font-size: 12px; }
+  .vendor-row:last-child { border-bottom: none; }
+  .vendor-name { font-weight: 700; color: #003580; }
+  .vendor-meta { color: #888; font-size: 11px; margin-top: 1px; }
+
+  .recon-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .recon-table th { font-size: 11px; font-weight: 700; color: #fff; background: #003580; text-align: left; padding: 6px 8px; }
+  .recon-table td { padding: 8px; border-bottom: 1px solid #eef3f9; vertical-align: middle; }
+  .recon-table tr:nth-child(even) td { background: #f7f9fc; }
+  .var-pos { color: #22863a; font-weight: 700; }
+  .var-neg { color: #cb2431; font-weight: 700; }
+  .var-warn { color: #e36209; font-weight: 700; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+  .badge-red { background: #ffeaea; color: #cb2431; border: 1px solid #cb2431; }
+  .badge-green { background: #eafaf1; color: #22863a; border: 1px solid #22863a; }
+  .badge-orange { background: #fff3cd; color: #e36209; border: 1px solid #e36209; }
+  .badge-blue { background: #e6f1fb; color: #003580; border: 1px solid #003580; }
+
+  .alert-box { background: #fff3cd; border: 1px solid #FFC72C; border-radius: 4px; padding: 10px 12px; font-size: 11px; color: #856404; margin-top: 12px; }
+  .alert-title { font-weight: 700; margin-bottom: 2px; }
+
+  .source-row { display: flex; gap: 6px; align-items: center; padding-top: 14px; border-top: 1px solid #eef3f9; margin-top: 8px; flex-wrap: wrap; }
+  .source-label { font-size: 11px; color: #aaa; }
+  .source-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 20px; border: 1px solid #d1d9e6; color: #666; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+  .right-col { display: flex; flex-direction: column; gap: 12px; }
+
+  .renewal-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #eef3f9; font-size: 12px; }
+  .renewal-row:last-child { border-bottom: none; }
+  .renewal-name { font-weight: 700; color: #003580; }
+  .renewal-meta { color: #888; font-size: 11px; }
+
+  .mock-note { text-align: center; font-size: 11px; color: #bbb; padding-top: 8px; }
+
+  @media (max-width: 680px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .panels { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="dash">
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Procurement Analytics</div>
+      <div class="topbar-sub">FY 2025 &middot; Corporate Services &middot; As of Q1 close</div>
+    </div>
+    <div class="topbar-right">
+      <select onchange="filterCategory(this.value)">
+        <option value="all">All categories</option>
+        <option value="Technology">Technology</option>
+        <option value="Consulting">Consulting</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Facilities">Facilities</option>
+      </select>
+
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Total managed spend</div>
+      <div class="kpi-value">$142M</div>
+      <div class="kpi-delta up">+8% vs. prior year</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Savings achieved (YTD)</div>
+      <div class="kpi-value">$6.1M</div>
+      <div class="kpi-delta down">76% of $8M plan</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Active contracts</div>
+      <div class="kpi-value">184</div>
+      <div class="kpi-delta warn">23 renewing in 90 days</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Vendors reconciled</div>
+      <div class="kpi-value">61%</div>
+      <div class="kpi-delta down">39% taxonomy gaps</div>
+    </div>
+  </div>
+
+  <div class="panels">
+
+    <div class="card">
+      <div class="card-title">Spend by category</div>
+      <div class="tab-row">
+        <button class="tab active" onclick="setView('spend', this)">Spend</button>
+        <button class="tab" onclick="setView('savings', this)">Savings plan vs. actual</button>
+        <button class="tab" onclick="setView('vendors', this)">Top vendors</button>
+      </div>
+
+      <!-- SPEND VIEW -->
+      <div id="view-spend">
+        <div class="bar-row"><div class="bar-label">Technology</div><div class="bar-track"><div class="bar-fill" style="width:82%;background:#003580;"></div></div><div class="bar-val">$58M</div></div>
+        <div class="bar-row"><div class="bar-label">Consulting</div><div class="bar-track"><div class="bar-fill" style="width:46%;background:#003580;"></div></div><div class="bar-val">$33M</div></div>
+        <div class="bar-row"><div class="bar-label">Marketing</div><div class="bar-track"><div class="bar-fill" style="width:34%;background:#003580;"></div></div><div class="bar-val">$24M</div></div>
+        <div class="bar-row"><div class="bar-label">Facilities &amp; RE</div><div class="bar-track"><div class="bar-fill" style="width:22%;background:#003580;"></div></div><div class="bar-val">$16M</div></div>
+        <div class="bar-row"><div class="bar-label">HR &amp; Benefits</div><div class="bar-track"><div class="bar-fill" style="width:12%;background:#003580;"></div></div><div class="bar-val">$8M</div></div>
+        <div class="bar-row"><div class="bar-label">Other</div><div class="bar-track"><div class="bar-fill" style="width:4%;background:#d1d9e6;"></div></div><div class="bar-val">$3M</div></div>
+      </div>
+
+      <!-- SAVINGS VIEW -->
+      <div id="view-savings" style="display:none;">
+        <table class="recon-table">
+          <thead>
+            <tr><th>Category</th><th>Plan</th><th>Actual (GL)</th><th>Variance</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Technology</strong></td><td>$2.8M</td><td>$2.1M</td><td class="var-neg">-$700K</td><td><span class="badge badge-red">Behind</span></td></tr>
+            <tr><td><strong>Consulting</strong></td><td>$2.4M</td><td>$2.6M</td><td class="var-pos">+$200K</td><td><span class="badge badge-green">Ahead</span></td></tr>
+            <tr><td><strong>Marketing</strong></td><td>$1.6M</td><td>$0.9M</td><td class="var-neg">-$700K</td><td><span class="badge badge-red">At risk</span></td></tr>
+            <tr><td><strong>Facilities</strong></td><td>$0.8M</td><td>$0.5M</td><td class="var-pos">+$300K</td><td><span class="badge badge-green">Ahead</span></td></tr>
+            <tr><td><strong>HR &amp; Benefits</strong></td><td>$0.4M</td><td>—</td><td class="var-warn">Unmatched</td><td><span class="badge badge-orange">GL gap</span></td></tr>
+          </tbody>
+        </table>
+        <div class="alert-box">
+          <div class="alert-title">&#9888; Taxonomy mismatch detected</div>
+          HR &amp; Benefits savings cannot be matched to a GL code. "HR Vendor Services" in the savings plan maps to 3 different GL codes depending on the system. Manual review required.
+        </div>
+      </div>
+
+      <!-- VENDORS VIEW -->
+      <div id="view-vendors" style="display:none;">
+        <div class="vendor-row">
+          <div><div class="vendor-name">Microsoft</div><div class="vendor-meta">Technology &middot; Ironclad: "Microsoft Corp" &middot; Oracle: "MSFT Inc."</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$18.2M</div><span class="badge badge-orange">Name mismatch</span></div>
+        </div>
+        <div class="vendor-row">
+          <div><div class="vendor-name">Deloitte</div><div class="vendor-meta">Consulting &middot; 3 variants across systems</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$11.7M</div><span class="badge badge-red">3 variants</span></div>
+        </div>
+        <div class="vendor-row">
+          <div><div class="vendor-name">Salesforce</div><div class="vendor-meta">Technology &middot; Normalized</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$9.4M</div><span class="badge badge-green">Matched</span></div>
+        </div>
+        <div class="vendor-row">
+          <div><div class="vendor-name">McKinsey &amp; Co.</div><div class="vendor-meta">Consulting &middot; Ironclad: "McKinsey &amp; Company"</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$8.1M</div><span class="badge badge-orange">Name mismatch</span></div>
+        </div>
+        <div class="vendor-row">
+          <div><div class="vendor-name">CBRE</div><div class="vendor-meta">Facilities &middot; Normalized</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$6.3M</div><span class="badge badge-green">Matched</span></div>
+        </div>
+        <div class="vendor-row">
+          <div><div class="vendor-name">WPP Group</div><div class="vendor-meta">Marketing &middot; Oracle only — no Ironclad contract</div></div>
+          <div style="text-align:right;"><div style="font-weight:700;color:#003580;margin-bottom:3px;">$5.8M</div><span class="badge badge-red">No contract</span></div>
+        </div>
+      </div>
+
+      <div class="source-row">
+        <span class="source-label">Data sources:</span>
+        <span class="source-pill"><span class="dot" style="background:#1D9E75;"></span>Oracle</span>
+        <span class="source-pill"><span class="dot" style="background:#185FA5;"></span>Ironclad</span>
+        <span class="source-pill"><span class="dot" style="background:#7F77DD;"></span>Salesforce</span>
+        <span class="source-pill"><span class="dot" style="background:#BA7517;"></span>Excel</span>
+        <span style="margin-left:auto;font-size:10px;color:#ccc;">Mock data &middot; PoC purposes only</span>
+      </div>
+    </div>
+
+    <div class="right-col">
+
+      <div class="card">
+        <div class="card-title">Upcoming contract renewals</div>
+        <div class="renewal-row">
+          <div><div class="renewal-name">Microsoft ELA</div><div class="renewal-meta">Renews Jun 15 &middot; $18.2M</div></div>
+          <span class="badge badge-red">48 days</span>
+        </div>
+        <div class="renewal-row">
+          <div><div class="renewal-name">Deloitte MSA</div><div class="renewal-meta">Renews Jul 1 &middot; $11.7M</div></div>
+          <span class="badge badge-orange">64 days</span>
+        </div>
+        <div class="renewal-row">
+          <div><div class="renewal-name">CBRE Facilities</div><div class="renewal-meta">Renews Jul 30 &middot; $6.3M</div></div>
+          <span class="badge badge-orange">93 days</span>
+        </div>
+        <div class="renewal-row">
+          <div><div class="renewal-name">Workday HCM</div><div class="renewal-meta">Renews Sep 1 &middot; $4.1M</div></div>
+          <span class="badge badge-blue">126 days</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Data source coverage</div>
+        <div style="font-size:11px;color:#888;margin-bottom:10px;">% of spend visible per system</div>
+        <div class="bar-row"><div class="bar-label">Oracle (ERP)</div><div class="bar-track"><div class="bar-fill" style="width:91%;background:#1D9E75;"></div></div><div class="bar-val">91%</div></div>
+        <div class="bar-row"><div class="bar-label">Ironclad (CLM)</div><div class="bar-track"><div class="bar-fill" style="width:68%;background:#185FA5;"></div></div><div class="bar-val">68%</div></div>
+        <div class="bar-row"><div class="bar-label">Salesforce (CRM)</div><div class="bar-track"><div class="bar-fill" style="width:54%;background:#7F77DD;"></div></div><div class="bar-val">54%</div></div>
+        <div class="bar-row"><div class="bar-label">Reconciled (all)</div><div class="bar-track"><div class="bar-fill" style="width:61%;background:#BA7517;"></div></div><div class="bar-val">61%</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mock-note">Propeller D&amp;I Team &middot; Mock data for PoC purposes only &middot; April 2026</div>
+
+</div>
+
+<script>
+function setView(view, btn) {
+  ['spend','savings','vendors'].forEach(function(v) {
+    document.getElementById('view-' + v).style.display = v === view ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function filterCategory(val) {
+  alert('In the live PoC, this will filter all views to show only "' + (val === 'all' ? 'All categories' : val) + '" spend data.');
+}
+</script>
+</body>
+</html>
